@@ -57,7 +57,7 @@ type SigClasses
 
 
 type Sig
-    = SigWithClass (List SigClass) (List SigType)
+    = SigWithClass SigClasses (List SigType)
     | SigList (List SigType)
 
 
@@ -162,7 +162,16 @@ parseSig =
                 , trailing = Optional
                 }
     in
-    map SigList parseArguments
+    oneOf
+        [ --         succeed SigWithClass
+          --            |= parseClasses
+          --            |. spaces
+          --            |. symbol "=>"
+          --            |= parseArguments
+          succeed
+            SigList
+            |= parseArguments
+        ]
 
 
 
