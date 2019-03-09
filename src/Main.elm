@@ -30,7 +30,7 @@ import Parser exposing (..)
 
 
 type alias Model =
-    { --    ramda : Result JD.Error (List RamdaFunction)
+    { ramda : List RamdaFunction
     }
 
 
@@ -174,26 +174,47 @@ parseSig =
         ]
 
 
+decodeSig : String -> Result (List DeadEnd) Sig
+decodeSig =
+    Parser.run parseSig
 
---decodeSignature : String -> JD.Decoder Sig
---decodeSignature string =
---    JD.fail "meh"
---
---
---decodeRamda : JD.Decoder (List RamdaFunction)
---decodeRamda =
---    JD.list
---        (JD.map4 RamdaFunction
---            (JD.field "description" JD.string)
---            (JD.field "name" JD.string)
---            (JD.map decodeSignature (JD.field "sig" JD.string))
---            (JD.field "category" JD.string)
---        )
+
+sequenceResult : List (Result a b) -> List b
+sequenceResult xs =
+    List.foldl
+        (\res agg ->
+            case res of
+                Ok x ->
+                    x :: agg
+
+                Err err ->
+                    always agg
+                        (Debug.log "err" err)
+        )
+        []
+        xs
+
+
+decodeRamdas : JD.Decoder (List (Result (List DeadEnd) RamdaFunction))
+decodeRamdas =
+    JD.list
+        (JD.map4
+            (\description name sigResult category ->
+                Result.map (\sig -> RamdaFunction description name sig category) sigResult
+            )
+            (JD.field "description" JD.string)
+            (JD.field "name" JD.string)
+            (JD.map decodeSig (JD.field "sig" JD.string))
+            (JD.field "category" JD.string)
+        )
 
 
 init : JD.Value -> ( Model, Cmd Msg )
 init value =
-    ( { -- ramda = JD.decodeValue decodeRamda value
+    ( { ramda =
+            JD.decodeValue decodeRamdas value
+                |> Result.map sequenceResult
+                |> Result.withDefault []
       }
     , Cmd.none
     )
@@ -209,7 +230,9 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        NoOp ->
+            ( model, Cmd.none )
 
 
 
@@ -219,8 +242,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ img [ src "/logo.svg" ] []
-        , h1 [] [ text "Your Elm App is working!" ]
+        [ Html.text (String.fromInt (List.length model.ramda))
         ]
 
 
