@@ -4,11 +4,13 @@ module Main exposing
     , RamdaFunction
     , Sig(..)
     , SigClass(..)
+    , SigClasses(..)
     , SigType(..)
     , TypeVar(..)
     , init
     , main
     , parseClass
+    , parseClasses
     , parseSig
     , parseSigType
     , update
@@ -48,6 +50,10 @@ type TypeVar
 
 type SigClass
     = SigClass String TypeVar
+
+
+type SigClasses
+    = SigClasses (List SigClass)
 
 
 type Sig
@@ -127,6 +133,20 @@ parseClass =
         |= word
         |. spaces
         |= typeVar
+
+
+parseClasses : Parser.Parser SigClasses
+parseClasses =
+    map SigClasses
+        (sequence
+            { start = ""
+            , separator = ","
+            , end = ""
+            , spaces = spaces
+            , item = parseClass
+            , trailing = Optional
+            }
+        )
 
 
 parseSig : Parser.Parser Sig

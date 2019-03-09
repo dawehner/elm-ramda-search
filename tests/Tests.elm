@@ -121,4 +121,18 @@ all =
                     Expect.equal (Ok (SigClass "Traversable" (TypeVar "t")))
                         (Parser.run parseClass "Traversable    t")
             ]
+        , describe "parseClasses"
+            [ test "mixed classes" <|
+                \_ ->
+                    Expect.equal
+                        (Ok
+                            (SigClasses
+                                [ SigClass "Functor" (TypeVar "a")
+                                , SigClass "Traversable" (TypeVar "t")
+                                , SigClass "Applicative" (TypeVar "b")
+                                ]
+                            )
+                        )
+                        (Parser.run parseClasses "Functor a, Traversable    t, Applicative b")
+            ]
         ]
