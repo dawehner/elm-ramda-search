@@ -102,23 +102,22 @@ all =
                     Expect.equal
                         (Ok (SigList [ Function [ Generic, Generic ], ListT Generic, ListT Generic ]))
                         (Parser.run parseSig "(* -> *) -> [*] -> [*]")
-
-            --            , test "function with typeclass and arguments" <|
-            --                \_ ->
-            --                    Expect.equal
-            --                        (Ok
-            --                            (SigWithClass
-            --                                (SigClasses
-            --                                    [ SigClass "Ord" (TypeVar "b")
-            --                                    ]
-            --                                )
-            --                                [ Function [ GenericVar (TypeVar "a"), GenericVar (TypeVar "b") ]
-            --                                , ListT (GenericVar (TypeVar "a"))
-            --                                , ListT (GenericVar (TypeVar "a"))
-            --                                ]
-            --                            )
-            --                        )
-            --                        (Parser.run parseSig "Ord b => (a -> b) -> [a] -> [a]")
+            , test "function with typeclass and arguments" <|
+                \_ ->
+                    Expect.equal
+                        (Ok
+                            (SigWithClass
+                                (SigClasses
+                                    [ SigClass "Ord" (TypeVar "b")
+                                    ]
+                                )
+                                [ Function [ GenericVar (TypeVar "a"), GenericVar (TypeVar "b") ]
+                                , ListT (GenericVar (TypeVar "a"))
+                                , ListT (GenericVar (TypeVar "a"))
+                                ]
+                            )
+                        )
+                        (Parser.run parseSig "Ord b => (a -> b) -> [a] -> [a]")
             ]
         , describe "parseClass"
             [ test "Functor class" <|

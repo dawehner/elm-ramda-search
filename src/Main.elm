@@ -163,61 +163,23 @@ parseSig =
                 }
     in
     oneOf
-        [ --         succeed SigWithClass
-          --            |= parseClasses
-          --            |. spaces
-          --            |. symbol "=>"
-          --            |= parseArguments
-          succeed
+        [ succeed SigWithClass
+            |= backtrackable parseClasses
+            |. spaces
+            |. symbol "=>"
+            |= parseArguments
+        , succeed
             SigList
             |= parseArguments
         ]
 
 
 
---    oneOf
---        [
---        map SigWithClass
---          (
---            |= parseClasses
---            |. spaces
---            |. symbol "=>"
---            |. spaces
---            |= parseArguments
---          )
---         map SigList parseArguments
---        ]
---parserTypeFunction : Parser.Parser Type
---parserTypeFunction =
---    Parser.succeed TypeFunction
---
---
---signatureParser :
---
---decodeSignature : String -> Sig
+--decodeSignature : String -> JD.Decoder Sig
 --decodeSignature string =
---    Parser.run signatureParser string
---    |> Result.withDefault []
-----    string
-----        |> String.replace ": Generic" ""
-----        |> Debug.log "cleared"
-----        |> String.split " -> "
-----        |> List.map (String.trim)
-----        |> List.map
-----            (\x ->
-----                case x of
-----                    "Boolean" ->
-----                        Boolean
-----
-----                    "*" ->
-----                        Generic
-----
-----                    "Number" ->
-----                        Number
-----
-----                    _ ->
-----                        Debug.log x Generic
-----            )
+--    JD.fail "meh"
+--
+--
 --decodeRamda : JD.Decoder (List RamdaFunction)
 --decodeRamda =
 --    JD.list
@@ -231,7 +193,7 @@ parseSig =
 
 init : JD.Value -> ( Model, Cmd Msg )
 init value =
-    ( { --     ramda = JD.decodeValue decodeRamda value
+    ( { -- ramda = JD.decodeValue decodeRamda value
       }
     , Cmd.none
     )
