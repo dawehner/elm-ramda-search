@@ -386,10 +386,14 @@ update msg model =
 
 viewFunction : RamdaFunction -> E.Element Msg
 viewFunction { name, sig } =
-    E.row [ E.spacing 10 ]
-        [ E.text name
-        , E.el [ Font.size 13 ] (E.text (sigToString sig))
-        ]
+    E.link [ E.pointer ]
+        { url = "https://ramdajs.com/docs/#" ++ name
+        , label =
+            E.row [ E.spacing 10 ]
+                [ E.text name
+                , E.el [ Font.size 13 ] (E.text (sigToString sig))
+                ]
+        }
 
 
 viewFunctions : List RamdaFunction -> E.Element Msg
