@@ -22,6 +22,7 @@ import Browser
 import Char
 import Element as E
 import Element.Font as Font
+import Element.Input as Input
 import Html exposing (Html)
 import Json.Decode as JD
 import Parser exposing (..)
@@ -33,6 +34,7 @@ import Parser exposing (..)
 
 type alias Model =
     { ramda : List RamdaFunction
+    , search : Maybe String
     }
 
 
@@ -273,6 +275,7 @@ init value =
             JD.decodeValue decodeRamdas value
                 |> Result.map sequenceResult
                 |> Result.withDefault []
+      , search = Nothing
       }
     , Cmd.none
     )
@@ -284,6 +287,7 @@ init value =
 
 type Msg
     = NoOp
+    | SearchTerm String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -292,6 +296,14 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
+        SearchTerm string ->
+            case string of
+                "" ->
+                    ( { model | search = Nothing }, Cmd.none )
+
+                term ->
+                    ( { model | search = Just term }, Cmd.none )
+
 
 
 ---- VIEW ----
@@ -299,17 +311,30 @@ update msg model =
 
 viewFunction : RamdaFunction -> E.Element Msg
 viewFunction { name, sig } =
-    E.column [ E.spacing 3 ]
+    E.row [ E.spacing 10 ]
         [ E.text name
         , E.el [ Font.size 13 ] (E.text (sigToString sig))
         ]
 
 
+viewFunctions : List RamdaFunction -> E.Element Msg
+viewFunctions functions =
+    E.column [ E.padding 20, E.spacing 10, E.centerX ] <|
+        List.map viewFunction functions
+
+
 view : Model -> Html Msg
 view model =
-    E.layout []
-        (E.column [ E.padding 20, E.spacing 10 ] <|
-            List.map viewFunction model.ramda
+    E.layout [ E.width E.fill, E.centerX ]
+        (E.column [ E.width E.fill, E.centerX ]
+            [ Input.search []
+                { label = Input.labelHidden "Search function"
+                , onChange = SearchTerm
+                , placeholder = Just (Input.placeholder [] (E.text "... search function"))
+                , text = model.search |> Maybe.withDefault ""
+                }
+            , viewFunctions model.ramda
+            ]
         )
 
 
