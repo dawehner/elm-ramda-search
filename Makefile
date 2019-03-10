@@ -1,2 +1,5 @@
 build:
-  nix-shell -p now-cli -c
+	elm-app build
+
+deploy: build
+	now

@@ -1,11 +1,16 @@
 {
   "version": 2,
+  "public": true,
   "name": "elm-ramda-search",
   "builds": [
     {
-      "src": "make build",
+      "src": "package.json",
       "use": "@now/static-build",
-      "config": { "distDir": "public" }
+      "config": {
+        "distDir": "build"
+      }
     }
   ]
 }
+
+
