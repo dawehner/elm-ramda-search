@@ -2,4 +2,4 @@ build:
 	elm-app build
 
 deploy: build
-	now
+	now && now alias -A ./now.json

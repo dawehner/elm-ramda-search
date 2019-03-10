@@ -2,6 +2,7 @@
   "version": 2,
   "public": true,
   "name": "elm-ramda-search",
+  "alias": "ramda-search.now.sh",
   "builds": [
     {
       "src": "package.json",
