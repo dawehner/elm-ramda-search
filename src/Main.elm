@@ -13,6 +13,7 @@ module Main exposing
     , parseClasses
     , parseSig
     , parseSigType
+    , sigToString
     , update
     , view
     )

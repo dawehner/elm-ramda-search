@@ -151,4 +151,15 @@ all =
                         )
                         (Parser.run parseClasses "Functor a, Traversable    t, Applicative b")
             ]
+        , describe "sigToString"
+            [ test "F" <|
+                \_ ->
+                    Expect.equal "* -> Boolean" (sigToString (SigList [ Generic, Boolean ]))
+            , test "add" <|
+                \_ ->
+                    Expect.equal "Number -> Number -> Number" (sigToString (SigList [ Number, Number, Number ]))
+            , test "adjust" <|
+                \_ ->
+                    Expect.equal "Number -> (a -> a) -> [a] -> [a]" (sigToString (SigList [ Number, Function [ GenericVar (TypeVar "a"), GenericVar (TypeVar "a") ], ListT (GenericVar (TypeVar "a")), ListT (GenericVar (TypeVar "a")) ]))
+            ]
         ]
