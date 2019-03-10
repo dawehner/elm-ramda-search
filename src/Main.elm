@@ -24,6 +24,7 @@ import Json.Decode as JD
 import List.Extra
 import Maybe
 import Parser exposing (..)
+import Set
 
 
 
@@ -342,13 +343,69 @@ filterOrJustTuple =
 
 filterAndSortSearch : String -> List RamdaFunction -> Result (List DeadEnd) (List RamdaFunction)
 filterAndSortSearch string list =
-    decodeSig string
+    let
+        typeResult =
+            decodeSig string
+                |> Result.map
+                    (\sig ->
+                        List.map (\function -> ( sigMetric sig function.sig, function )) list
+                            |> filterOrJustTuple
+                    )
+
+        nameResult =
+            (List.filter (\function -> String.contains string function.name) list
+                |> List.map (\x -> ( 0.2, x ))
+            )
+                |> (\x ->
+                        if List.length x > 0 then
+                            Ok x
+
+                        else
+                            Err []
+                   )
+
+        descriptionResult =
+            (List.filter (\function -> String.contains string function.description) list
+                |> List.map (\x -> ( 0.1, x ))
+            )
+                |> (\x ->
+                        if List.length x > 0 then
+                            Ok x
+
+                        else
+                            Err []
+                   )
+    in
+    (case ( typeResult, nameResult, descriptionResult ) of
+        ( Ok a, Ok b, Ok c ) ->
+            Ok (a ++ b ++ c)
+
+        ( Ok a, Ok b, Err _ ) ->
+            Ok (a ++ b)
+
+        ( Ok a, Err _, Ok c ) ->
+            Ok (a ++ c)
+
+        ( Ok a, Err _, Err _ ) ->
+            Ok a
+
+        ( Err _, Ok b, Ok c ) ->
+            Ok (b ++ c)
+
+        ( Err _, Ok b, Err _ ) ->
+            Ok b
+
+        ( Err _, Err _, Ok c ) ->
+            Ok c
+
+        ( err, _, _ ) ->
+            err
+    )
         |> Result.map
-            (\sig ->
-                List.map (\function -> ( sigMetric sig function.sig, function )) list
-                    |> filterOrJustTuple
-                    |> List.sortBy Tuple.first
+            (\xs ->
+                List.sortBy Tuple.first xs
                     |> List.map Tuple.second
+                    |> List.Extra.uniqueBy .name
             )
 
 
