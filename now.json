@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "name": "elm-ramda-search",
+  "builds": [
+    {
+      "src": "make build",
+      "use": "@now/static-build",
+      "config": { "distDir": "public" }
+    }
+  ]
+}
