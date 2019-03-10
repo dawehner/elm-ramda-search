@@ -19,8 +19,9 @@ module Main exposing
 
 import Browser
 import Char
-import Html exposing (Html, div, h1, img, text)
-import Html.Attributes exposing (src)
+import Element as E
+import Element.Font as Font
+import Html exposing (Html)
 import Json.Decode as JD
 import Parser exposing (..)
 
@@ -72,8 +73,8 @@ extractSigTypes sig =
 
 
 type alias RamdaFunction =
-    { description : String
-    , name : String
+    { name : String
+    , description : String
     , sig : Sig
     , category : String
     }
@@ -174,6 +175,62 @@ parseSig =
         ]
 
 
+typeVarToString : TypeVar -> String
+typeVarToString (TypeVar name) =
+    name
+
+
+sigClassToString : SigClass -> String
+sigClassToString (SigClass name var) =
+    name ++ " " ++ typeVarToString var
+
+
+sigClassesToString : SigClasses -> String
+sigClassesToString (SigClasses sigClasses) =
+    List.map sigClassToString sigClasses
+        |> String.join ","
+
+
+sigTypeToString : SigType -> String
+sigTypeToString sigType =
+    case sigType of
+        Generic ->
+            "*"
+
+        GenericVar var ->
+            typeVarToString var
+
+        Boolean ->
+            "Boolean"
+
+        Number ->
+            "Number"
+
+        ListT sigType_ ->
+            "[" ++ sigTypeToString sigType_ ++ "]"
+
+        Function types ->
+            "(" ++ (List.map sigTypeToString types |> String.join " -> ") ++ ")"
+
+        Object typeKey keyVal ->
+            "{" ++ sigTypeToString typeKey ++ ":" ++ " " ++ sigTypeToString keyVal ++ "}"
+
+
+sigTypesToString : List SigType -> String
+sigTypesToString =
+    List.map sigTypeToString >> String.join " -> "
+
+
+sigToString : Sig -> String
+sigToString sig =
+    case sig of
+        SigWithClass classes types ->
+            sigClassesToString classes ++ " => " ++ sigTypesToString types
+
+        SigList types ->
+            sigTypesToString types
+
+
 decodeSig : String -> Result (List DeadEnd) Sig
 decodeSig =
     Parser.run parseSig
@@ -202,8 +259,8 @@ decodeRamdas =
             (\description name sigResult category ->
                 Result.map (\sig -> RamdaFunction description name sig category) sigResult
             )
-            (JD.field "description" JD.string)
             (JD.field "name" JD.string)
+            (JD.field "description" JD.string)
             (JD.map decodeSig (JD.field "sig" JD.string))
             (JD.field "category" JD.string)
         )
@@ -239,11 +296,20 @@ update msg model =
 ---- VIEW ----
 
 
+viewFunction : RamdaFunction -> E.Element Msg
+viewFunction { name, sig } =
+    E.column [ E.spacing 3 ]
+        [ E.text name
+        , E.el [ Font.size 13 ] (E.text (sigToString sig))
+        ]
+
+
 view : Model -> Html Msg
 view model =
-    div []
-        [ Html.text (String.fromInt (List.length model.ramda))
-        ]
+    E.layout []
+        (E.column [ E.padding 20, E.spacing 10 ] <|
+            List.map viewFunction model.ramda
+        )
 
 
 
