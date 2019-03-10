@@ -274,9 +274,8 @@ sequenceResult xs =
                 Ok x ->
                     x :: agg
 
-                Err err ->
-                    always agg
-                        (Debug.log "err" err)
+                Err _ ->
+                    agg
         )
         []
         xs
