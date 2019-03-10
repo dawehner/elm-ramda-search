@@ -17,6 +17,8 @@ module Main exposing
 import Browser
 import Char
 import Element as E
+import Element.Background as Background
+import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
@@ -24,7 +26,6 @@ import Json.Decode as JD
 import List.Extra
 import Maybe
 import Parser exposing (..)
-import Set
 
 
 
@@ -301,6 +302,7 @@ init value =
     ( { ramda =
             JD.decodeValue decodeRamdas value
                 |> Result.map sequenceResult
+                |> Result.map (List.sortBy .name)
                 |> Result.withDefault []
       , search = Nothing
       }
@@ -433,32 +435,72 @@ update msg model =
 ---- VIEW ----
 
 
+colors =
+    { c1 = E.rgb (253.0 / 255.0) (254.0 / 255.0) (255.0 / 255.0)
+    , c2 = E.rgb (235.0 / 255.0) (237.0 / 255.0) (232.0 / 255.0)
+    , c3 = E.rgb (181.0 / 255.0) (182.0 / 255.0) (181.0 / 255.0)
+    , c4 = E.rgb (30.0 / 255.0) (17.0 / 255.0) (17.0 / 255.0)
+    }
+
+
 viewFunction : RamdaFunction -> E.Element Msg
-viewFunction { name, sig } =
-    E.link [ E.pointer ]
+viewFunction { name, sig, category } =
+    E.link
+        [ E.pointer
+        , Font.color colors.c4
+        , E.mouseOver
+            [ Background.color colors.c2
+            ]
+        , E.padding 10
+        , E.width E.fill
+        ]
         { url = "https://ramdajs.com/docs/#" ++ name
         , label =
-            E.row [ E.spacing 10 ]
+            E.row [ E.spacing 10, E.width E.fill ]
                 [ E.text name
-                , E.el [ Font.size 13 ] (E.text (sigToString sig))
+                , E.el
+                    [ Font.size 13
+                    , Font.family
+                        [ Font.typeface "Fira Code"
+                        , Font.typeface "Consolas"
+                        , Font.typeface "Courier"
+                        , Font.typeface "monospace"
+                        ]
+                    ]
+                    (E.text (sigToString sig))
+                , E.el
+                    [ Font.size 15
+                    , Font.bold
+                    , Border.rounded 5
+                    , E.padding 5
+                    , Background.color colors.c3
+                    , E.alignRight
+                    ]
+                    (E.text category)
                 ]
         }
 
 
 viewFunctions : List RamdaFunction -> E.Element Msg
 viewFunctions functions =
-    E.column [ E.padding 20, E.spacing 10, E.centerX ] <|
+    E.column [ E.centerX, E.width E.fill ] <|
         List.map viewFunction functions
 
 
 view : Model -> Html Msg
 view model =
-    E.layout [ E.width E.fill, E.centerX ]
+    E.layout
+        [ E.width E.fill
+        , E.centerX
+        , Background.color colors.c1
+        ]
         (E.column [ E.width E.fill, E.centerX ]
-            [ Input.search []
+            [ Input.search
+                [ Input.focusedOnLoad
+                ]
                 { label = Input.labelHidden "Search function"
                 , onChange = SearchTerm
-                , placeholder = Just (Input.placeholder [] (E.text "... search function"))
+                , placeholder = Just (Input.placeholder [] (E.text "Filter"))
                 , text = model.search |> Maybe.withDefault ""
                 }
             , Maybe.map
