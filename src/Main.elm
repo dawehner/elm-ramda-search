@@ -483,7 +483,7 @@ viewFunction { name, sig, category } =
 
 viewFunctions : List RamdaFunction -> E.Element Msg
 viewFunctions functions =
-    E.column [ E.centerX, E.width E.fill ] <|
+    E.column [ E.width E.fill ] <|
         List.map viewFunction functions
 
 
@@ -491,10 +491,9 @@ view : Model -> Html Msg
 view model =
     E.layout
         [ E.width E.fill
-        , E.centerX
         , Background.color colors.c1
         ]
-        (E.column [ E.width E.fill, E.centerX ]
+        (E.column [ E.width E.fill ]
             [ Input.search
                 [ Input.focusedOnLoad
                 ]
@@ -515,6 +514,24 @@ view model =
                 model.search
                 |> Maybe.withDefault
                     (viewFunctions model.ramda)
+            , E.row
+                [ E.alignBottom
+                , E.width E.fill
+                , E.padding 20
+                , E.spacing 10
+                ]
+                [ E.text "A type driven search for ramda functions"
+                , E.newTabLink
+                    [ Font.underline
+                    ]
+                    { url = "https://twitter.com/da_wehner"
+                    , label = E.text "@dawehner"
+                    }
+                , E.newTabLink [ Font.underline ]
+                    { url = "http://github.com/dawehner/elm-ramda-search"
+                    , label = E.text "Source"
+                    }
+                ]
             ]
         )
 
