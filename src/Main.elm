@@ -320,10 +320,10 @@ sigMetric sigA sigB =
         Just 0.0
 
     else if List.Extra.isInfixOf (extractSigTypes sigA) (extractSigTypes sigB) then
-        Just 0.5
+        Just 0.3
 
     else if List.Extra.isInfixOf (extractSigTypes sigA) (extractSigTypes (convertToGenerics sigB)) then
-        Just 0.3
+        Just 0.5
 
     else
         Nothing
