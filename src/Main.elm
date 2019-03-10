@@ -41,6 +41,8 @@ type SigType
     | GenericVar TypeVar
     | Boolean
     | Number
+    | StringT
+    | RegExp
     | ListT SigType
     | Function (List SigType)
     | Object SigType SigType
@@ -88,6 +90,10 @@ parseSigType =
             |. keyword "Boolean"
         , succeed Number
             |. keyword "Number"
+        , succeed StringT
+            |. keyword "String"
+        , succeed RegExp
+            |. keyword "RegExp"
         , succeed Generic
             |. keyword "*"
         , map GenericVar typeVar
@@ -206,6 +212,12 @@ sigTypeToString sigType =
 
         Number ->
             "Number"
+
+        StringT ->
+            "String"
+
+        RegExp ->
+            "RegExp"
 
         ListT sigType_ ->
             "[" ++ sigTypeToString sigType_ ++ "]"
