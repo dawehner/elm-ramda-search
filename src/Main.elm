@@ -22,6 +22,7 @@ import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
 import Json.Decode as JD
+import List.Extra
 import Maybe
 import Parser exposing (..)
 
@@ -75,6 +76,25 @@ extractSigTypes sig =
             xs
 
 
+convertToGenerics : Sig -> Sig
+convertToGenerics sig =
+    let
+        replace x =
+            case x of
+                GenericVar _ ->
+                    Generic
+
+                _ ->
+                    x
+    in
+    case sig of
+        SigList xs ->
+            SigList (List.map replace xs)
+
+        SigWithClass _ xs ->
+            SigList (List.map replace xs)
+
+
 type alias RamdaFunction =
     { name : String
     , description : String
@@ -97,6 +117,10 @@ parseSigType =
         , succeed Generic
             |. keyword "*"
         , map GenericVar typeVar
+        , succeed ListT
+            |. symbol "List"
+            |. spaces
+            |= lazy (\_ -> parseSigType)
         , succeed ListT
             |. symbol "["
             |. spaces
@@ -299,6 +323,12 @@ sigMetric : Sig -> Sig -> Maybe Float
 sigMetric sigA sigB =
     if sigA == sigB then
         Just 0.0
+
+    else if List.Extra.isInfixOf (extractSigTypes sigA) (extractSigTypes sigB) then
+        Just 0.5
+
+    else if List.Extra.isInfixOf (extractSigTypes sigA) (extractSigTypes (convertToGenerics sigB)) then
+        Just 0.3
 
     else
         Nothing
