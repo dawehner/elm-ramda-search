@@ -107,10 +107,8 @@ all =
                     Expect.equal
                         (Ok
                             (SigWithClass
-                                (SigClasses
-                                    [ SigClass "Ord" (TypeVar "b")
-                                    ]
-                                )
+                                [ SigClass "Ord" (TypeVar "b")
+                                ]
                                 [ Function [ GenericVar (TypeVar "a"), GenericVar (TypeVar "b") ]
                                 , ListT (GenericVar (TypeVar "a"))
                                 , ListT (GenericVar (TypeVar "a"))
@@ -122,19 +120,19 @@ all =
         , describe "parseSig for tpye classes"
             [ test "Functor class" <|
                 \_ ->
-                    Expect.equal (Ok (SigWithClass (SigClasses [ SigClass "Functor" (TypeVar "a") ]) []))
+                    Expect.equal (Ok (SigWithClass [ SigClass "Functor" (TypeVar "a") ] []))
                         (Parser.run parseSig "Functor a")
             , test "Applicative class" <|
                 \_ ->
-                    Expect.equal (Ok (SigWithClass (SigClasses [ SigClass "Applicative" (TypeVar "b") ]) []))
+                    Expect.equal (Ok (SigWithClass [ SigClass "Applicative" (TypeVar "b") ] []))
                         (Parser.run parseSig "Applicative  b")
             , test "Applicative class" <|
                 \_ ->
-                    Expect.equal (Ok (SigWithClass (SigClasses [ SigClass "Applicative" (TypeVar "b") ]) []))
+                    Expect.equal (Ok (SigWithClass [ SigClass "Applicative" (TypeVar "b") ] []))
                         (Parser.run parseSig "Applicative  b")
             , test "Traversable class" <|
                 \_ ->
-                    Expect.equal (Ok (SigWithClass (SigClasses [ SigClass "Traversable" (TypeVar "t") ]) []))
+                    Expect.equal (Ok (SigWithClass [ SigClass "Traversable" (TypeVar "t") ] []))
                         (Parser.run parseSig "Traversable    t")
             ]
 
@@ -144,7 +142,7 @@ all =
         --                    Expect.equal
         --                        (Ok
         --                            (SigWithClass
-        --                                (SigClasses
+        --                                (
         --                                    [ SigClass "Functor" (TypeVar "a")
         --                                    , SigClass "Traversable" (TypeVar "t")
         --                                    , SigClass "Applicative" (TypeVar "b")

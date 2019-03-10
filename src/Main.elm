@@ -4,7 +4,6 @@ module Main exposing
     , RamdaFunction
     , Sig(..)
     , SigClass(..)
-    , SigClasses(..)
     , SigType(..)
     , TypeVar(..)
     , init
@@ -57,12 +56,8 @@ type SigClass
     = SigClass String TypeVar
 
 
-type SigClasses
-    = SigClasses (List SigClass)
-
-
 type Sig
-    = SigWithClass SigClasses (List SigType)
+    = SigWithClass (List SigClass) (List SigType)
     | SigList (List SigType)
 
 
@@ -167,18 +162,16 @@ parseClass =
         |= typeVar
 
 
-parseClasses : Parser.Parser SigClasses
+parseClasses : Parser.Parser (List SigClass)
 parseClasses =
-    map SigClasses
-        (sequence
-            { start = ""
-            , separator = ","
-            , end = ""
-            , spaces = spaces
-            , item = parseClass
-            , trailing = Optional
-            }
-        )
+    sequence
+        { start = ""
+        , separator = ","
+        , end = ""
+        , spaces = spaces
+        , item = parseClass
+        , trailing = Optional
+        }
 
 
 parseSig : Parser.Parser Sig
@@ -216,8 +209,8 @@ sigClassToString (SigClass name var) =
     name ++ " " ++ typeVarToString var
 
 
-sigClassesToString : SigClasses -> String
-sigClassesToString (SigClasses sigClasses) =
+sigClassesToString : List SigClass -> String
+sigClassesToString sigClasses =
     List.map sigClassToString sigClasses
         |> String.join ","
 
