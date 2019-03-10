@@ -14,67 +14,67 @@ import Test exposing (..)
 all : Test
 all =
     describe "test suite"
-        [ describe "parseSigType"
+        [ describe "parseSig basic"
             [ test "boolean" <|
                 \_ ->
                     Expect.equal
-                        (Ok Boolean)
-                        (Parser.run parseSigType "Boolean")
+                        (Ok (SigList [ Boolean ]))
+                        (Parser.run parseSig "Boolean")
             , test "number" <|
                 \_ ->
                     Expect.equal
-                        (Ok Number)
-                        (Parser.run parseSigType "Number")
+                        (Ok (SigList [ Number ]))
+                        (Parser.run parseSig "Number")
             , test "generic" <|
                 \_ ->
                     Expect.equal
-                        (Ok Generic)
-                        (Parser.run parseSigType "*")
+                        (Ok (SigList [ Generic ]))
+                        (Parser.run parseSig "*")
             , test "generic with a" <|
                 \_ ->
                     Expect.equal
-                        (Ok (GenericVar (TypeVar "a")))
-                        (Parser.run parseSigType "a")
+                        (Ok (SigList [ GenericVar (TypeVar "a") ]))
+                        (Parser.run parseSig "a")
             , test "generic with b" <|
                 \_ ->
                     Expect.equal
-                        (Ok (GenericVar (TypeVar "b")))
-                        (Parser.run parseSigType "b")
+                        (Ok (SigList [ GenericVar (TypeVar "b") ]))
+                        (Parser.run parseSig "b")
             , test "list of generic" <|
                 \_ ->
                     Expect.equal
-                        (Ok (ListT Generic))
-                        (Parser.run parseSigType "[*]")
+                        (Ok (SigList [ ListT Generic ]))
+                        (Parser.run parseSig "[*]")
             , test "nested list of generic" <|
                 \_ ->
                     Expect.equal
-                        (Ok (ListT (ListT Generic)))
-                        (Parser.run parseSigType "[[*]]")
+                        (Ok (SigList [ ListT (ListT Generic) ]))
+                        (Parser.run parseSig "[[*]]")
             , test "list of boolean" <|
                 \_ ->
                     Expect.equal
-                        (Ok (ListT Boolean))
-                        (Parser.run parseSigType "[Boolean]")
+                        (Ok (SigList [ ListT Boolean ]))
+                        (Parser.run parseSig "[Boolean]")
             , test "Function 1 argument" <|
                 \_ ->
                     Expect.equal
-                        (Ok (Function [ Generic, Generic ]))
-                        (Parser.run parseSigType "(* -> *)")
+                        (Ok (SigList [ Function [ Generic, Generic ] ]))
+                        (Parser.run parseSig "(* -> *)")
             , test "Function 3 argument" <|
                 \_ ->
                     Expect.equal
-                        (Ok (Function [ Generic, Number, Generic ]))
-                        (Parser.run parseSigType "(* -> Number -> *)")
+                        (Ok (SigList [ Function [ Generic, Number, Generic ] ]))
+                        (Parser.run parseSig "(* -> Number -> *)")
             , test "Object with generic key and value" <|
                 \_ ->
                     Expect.equal
-                        (Ok (Object Generic Generic))
-                        (Parser.run parseSigType "{*: *}")
+                        (Ok (SigList [ Object Generic Generic ]))
+                        (Parser.run parseSig "{*: *}")
             , test "Object with specific key and value" <|
                 \_ ->
                     Expect.equal
-                        (Ok (Object (GenericVar (TypeVar "k")) (GenericVar (TypeVar "v"))))
-                        (Parser.run parseSigType "{k: v}")
+                        (Ok (SigList [ Object (GenericVar (TypeVar "k")) (GenericVar (TypeVar "v")) ]))
+                        (Parser.run parseSig "{k: v}")
             ]
         , describe "parseSig"
             [ test "simple function" <|
@@ -119,38 +119,42 @@ all =
                         )
                         (Parser.run parseSig "Ord b => (a -> b) -> [a] -> [a]")
             ]
-        , describe "parseClass"
+        , describe "parseSig for tpye classes"
             [ test "Functor class" <|
                 \_ ->
-                    Expect.equal (Ok (SigClass "Functor" (TypeVar "a")))
-                        (Parser.run parseClass "Functor a")
+                    Expect.equal (Ok (SigWithClass (SigClasses [ SigClass "Functor" (TypeVar "a") ]) []))
+                        (Parser.run parseSig "Functor a")
             , test "Applicative class" <|
                 \_ ->
-                    Expect.equal (Ok (SigClass "Applicative" (TypeVar "b")))
-                        (Parser.run parseClass "Applicative  b")
+                    Expect.equal (Ok (SigWithClass (SigClasses [ SigClass "Applicative" (TypeVar "b") ]) []))
+                        (Parser.run parseSig "Applicative  b")
             , test "Applicative class" <|
                 \_ ->
-                    Expect.equal (Ok (SigClass "Applicative" (TypeVar "b")))
-                        (Parser.run parseClass "Applicative  b")
+                    Expect.equal (Ok (SigWithClass (SigClasses [ SigClass "Applicative" (TypeVar "b") ]) []))
+                        (Parser.run parseSig "Applicative  b")
             , test "Traversable class" <|
                 \_ ->
-                    Expect.equal (Ok (SigClass "Traversable" (TypeVar "t")))
-                        (Parser.run parseClass "Traversable    t")
+                    Expect.equal (Ok (SigWithClass (SigClasses [ SigClass "Traversable" (TypeVar "t") ]) []))
+                        (Parser.run parseSig "Traversable    t")
             ]
-        , describe "parseClasses"
-            [ test "mixed classes" <|
-                \_ ->
-                    Expect.equal
-                        (Ok
-                            (SigClasses
-                                [ SigClass "Functor" (TypeVar "a")
-                                , SigClass "Traversable" (TypeVar "t")
-                                , SigClass "Applicative" (TypeVar "b")
-                                ]
-                            )
-                        )
-                        (Parser.run parseClasses "Functor a, Traversable    t, Applicative b")
-            ]
+
+        --        , describe "parseClasses"
+        --            [ test "mixed classes" <|
+        --                \_ ->
+        --                    Expect.equal
+        --                        (Ok
+        --                            (SigWithClass
+        --                                (SigClasses
+        --                                    [ SigClass "Functor" (TypeVar "a")
+        --                                    , SigClass "Traversable" (TypeVar "t")
+        --                                    , SigClass "Applicative" (TypeVar "b")
+        --                                    ]
+        --                                )
+        --                                []
+        --                            )
+        --                        )
+        --                        (Parser.run parseSig "(Functor a, Traversable    t, Applicative b) => a")
+        --            ]
         , describe "sigToString"
             [ test "F" <|
                 \_ ->

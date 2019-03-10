@@ -9,10 +9,7 @@ module Main exposing
     , TypeVar(..)
     , init
     , main
-    , parseClass
-    , parseClasses
     , parseSig
-    , parseSigType
     , sigToString
     , update
     , view
