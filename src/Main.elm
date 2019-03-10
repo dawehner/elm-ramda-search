@@ -25,6 +25,7 @@ import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
 import Json.Decode as JD
+import Maybe
 import Parser exposing (..)
 
 
@@ -285,6 +286,41 @@ init value =
 ---- UPDATE ----
 
 
+sigMetric : Sig -> Sig -> Maybe Float
+sigMetric sigA sigB =
+    if sigA == sigB then
+        Just 0.0
+
+    else
+        Nothing
+
+
+filterOrJustTuple : List ( Maybe a, b ) -> List ( a, b )
+filterOrJustTuple =
+    List.foldl
+        (\( x, b ) agg ->
+            case x of
+                Just x_ ->
+                    ( x_, b ) :: agg
+
+                _ ->
+                    agg
+        )
+        []
+
+
+filterAndSortSearch : String -> List RamdaFunction -> Result (List DeadEnd) (List RamdaFunction)
+filterAndSortSearch string list =
+    decodeSig string
+        |> Result.map
+            (\sig ->
+                List.map (\function -> ( sigMetric sig function.sig, function )) list
+                    |> filterOrJustTuple
+                    |> List.sortBy Tuple.first
+                    |> List.map Tuple.second
+            )
+
+
 type Msg
     = NoOp
     | SearchTerm String
@@ -333,7 +369,18 @@ view model =
                 , placeholder = Just (Input.placeholder [] (E.text "... search function"))
                 , text = model.search |> Maybe.withDefault ""
                 }
-            , viewFunctions model.ramda
+            , Maybe.map
+                (\search ->
+                    case filterAndSortSearch search model.ramda of
+                        Err _ ->
+                            E.text "error parsing"
+
+                        Ok functions ->
+                            viewFunctions functions
+                )
+                model.search
+                |> Maybe.withDefault
+                    (viewFunctions model.ramda)
             ]
         )
 
