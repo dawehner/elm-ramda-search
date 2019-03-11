@@ -7,10 +7,6 @@ import Result
 import Test exposing (..)
 
 
-
--- Check out http://package.elm-lang.org/packages/elm-community/elm-test/latest to learn more about testing in Elm!
-
-
 all : Test
 all =
     describe "test suite"
@@ -117,23 +113,19 @@ all =
                         )
                         (Parser.run parseSig "Ord b => (a -> b) -> [a] -> [a]")
             ]
-        , describe "parseSig for tpye classes"
+        , describe "parseSig for type classes"
             [ test "Functor class" <|
                 \_ ->
-                    Expect.equal (Ok (SigWithClass [ SigClass "Functor" (TypeVar "a") ] []))
-                        (Parser.run parseSig "Functor a")
+                    Expect.equal (Ok (SigWithClass [ SigClass "Functor" (TypeVar "a") ] [ GenericVar (TypeVar "a") ]))
+                        (Parser.run parseSig "Functor a => a")
             , test "Applicative class" <|
                 \_ ->
-                    Expect.equal (Ok (SigWithClass [ SigClass "Applicative" (TypeVar "b") ] []))
-                        (Parser.run parseSig "Applicative  b")
-            , test "Applicative class" <|
-                \_ ->
-                    Expect.equal (Ok (SigWithClass [ SigClass "Applicative" (TypeVar "b") ] []))
-                        (Parser.run parseSig "Applicative  b")
+                    Expect.equal (Ok (SigWithClass [ SigClass "Applicative" (TypeVar "b") ] [ GenericVar (TypeVar "b") ]))
+                        (Parser.run parseSig "Applicative  b => b")
             , test "Traversable class" <|
                 \_ ->
-                    Expect.equal (Ok (SigWithClass [ SigClass "Traversable" (TypeVar "t") ] []))
-                        (Parser.run parseSig "Traversable    t")
+                    Expect.equal (Ok (SigWithClass [ SigClass "Traversable" (TypeVar "t") ] [ GenericVar (TypeVar "t") ]))
+                        (Parser.run parseSig "Traversable    t => t")
             ]
 
         --        , describe "parseClasses"

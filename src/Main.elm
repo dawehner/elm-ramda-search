@@ -6,12 +6,9 @@ module Main exposing
     , SigClass(..)
     , SigType(..)
     , TypeVar(..)
-    , init
     , main
     , parseSig
     , sigToString
-    , update
-    , view
     )
 
 import Browser
@@ -113,7 +110,7 @@ parseSigType =
             |. keyword "RegExp"
         , succeed Generic
             |. keyword "*"
-        , map GenericVar typeVar
+        , map GenericVar parseTypeVar
         , succeed ListT
             |. symbol "List"
             |. spaces
@@ -139,8 +136,8 @@ parseSigType =
         ]
 
 
-word : Parser String
-word =
+parseWord : Parser String
+parseWord =
     succeed ()
         |. spaces
         |. chompIf Char.isUpper
@@ -148,8 +145,8 @@ word =
         |> getChompedString
 
 
-typeVar : Parser TypeVar
-typeVar =
+parseTypeVar : Parser TypeVar
+parseTypeVar =
     succeed ()
         |. chompIf Char.isLower
         |> getChompedString
@@ -159,9 +156,9 @@ typeVar =
 parseClass : Parser.Parser SigClass
 parseClass =
     succeed SigClass
-        |= word
+        |= parseWord
         |. spaces
-        |= typeVar
+        |= parseTypeVar
 
 
 parseClasses : Parser.Parser (List SigClass)
