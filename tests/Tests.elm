@@ -127,6 +127,10 @@ all =
                     Expect.equal (Ok (SigWithClass [ SigClass "Traversable" (TypeVar "t") ] [ GenericVar (TypeVar "t") ]))
                         (Parser.run parseSig "Traversable    t => t")
             ]
+        , test "lensIndex" <|
+            \_ ->
+                Expect.equal (Ok (SigList [ Number, Container "Lens" [ GenericVar (TypeVar "s"), GenericVar (TypeVar "a") ] ]))
+                    (Parser.run parseSig "Number -> Lens s a")
 
         --        , describe "parseClasses"
         --            [ test "mixed classes" <|
