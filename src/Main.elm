@@ -38,6 +38,7 @@ type alias Model =
 type SigType
     = Generic
     | GenericVar TypeVar
+    | Container String (List SigType)
     | Boolean
     | Number
     | StringT
@@ -102,10 +103,24 @@ parseSigType =
     oneOf
         [ succeed Boolean
             |. keyword "Boolean"
+        , succeed Boolean
+            |. keyword "boolean"
+        , succeed Boolean
+            |. keyword "bool"
+        , succeed Boolean
+            |. keyword "Bool"
         , succeed Number
             |. keyword "Number"
+        , succeed Number
+            |. keyword "number"
+        , succeed Number
+            |. keyword "int"
+        , succeed Number
+            |. keyword "float"
         , succeed StringT
             |. keyword "String"
+        , succeed StringT
+            |. keyword "string"
         , succeed RegExp
             |. keyword "RegExp"
         , succeed Generic
@@ -120,6 +135,19 @@ parseSigType =
             |. spaces
             |= lazy (\_ -> parseSigType)
             |. symbol "]"
+        , succeed Container
+            |= parseWord
+            |. spaces
+            |= map (List.map GenericVar)
+                (sequence
+                    { start = ""
+                    , end = ""
+                    , separator = ""
+                    , spaces = spaces
+                    , item = parseTypeVar
+                    , trailing = Parser.Optional
+                    }
+                )
         , succeed Function
             |. symbol "("
             |. spaces
@@ -231,6 +259,9 @@ sigTypeToString sigType =
 
         StringT ->
             "String"
+
+        Container containerType innerTypes ->
+            Debug.todo "implement ..."
 
         RegExp ->
             "RegExp"
