@@ -261,7 +261,7 @@ sigTypeToString sigType =
             "String"
 
         Container containerType innerTypes ->
-            Debug.todo "implement ..."
+            "TODO"
 
         RegExp ->
             "RegExp"
