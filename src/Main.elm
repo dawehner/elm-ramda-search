@@ -12,8 +12,10 @@ module Main exposing
     )
 
 import Browser
+import Browser.Dom
+import Browser.Events
 import Char
-import Element as E
+import Element as E exposing (DeviceClass(..))
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -23,6 +25,7 @@ import Json.Decode as JD
 import List.Extra
 import Maybe
 import Parser exposing (..)
+import Task
 
 
 
@@ -32,6 +35,10 @@ import Parser exposing (..)
 type alias Model =
     { ramda : List RamdaFunction
     , search : Maybe String
+    , windowSize :
+        { width : Int
+        , height : Int
+        }
     }
 
 
@@ -333,8 +340,10 @@ init value =
                 |> Result.map (List.sortBy .name)
                 |> Result.withDefault []
       , search = Nothing
+      , windowSize = { width = 0, height = 0 }
       }
-    , Cmd.none
+    , Task.perform (\viewport -> WindowResize { width = round viewport.scene.width, height = round viewport.scene.height })
+        Browser.Dom.getViewport
     )
 
 
@@ -442,6 +451,10 @@ filterAndSortSearch string list =
 type Msg
     = NoOp
     | SearchTerm String
+    | WindowResize
+        { width : Int
+        , height : Int
+        }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -458,6 +471,9 @@ update msg model =
                 term ->
                     ( { model | search = Just term }, Cmd.none )
 
+        WindowResize { width, height } ->
+            ( { model | windowSize = { width = width, height = height } }, Cmd.none )
+
 
 
 ---- VIEW ----
@@ -471,8 +487,43 @@ colors =
     }
 
 
-viewFunction : RamdaFunction -> E.Element Msg
-viewFunction { name, sig, category } =
+viewFunction : E.Device -> RamdaFunction -> E.Element Msg
+viewFunction device { name, sig, category } =
+    let
+        isPhone =
+            device.class == Phone
+
+        nameElement =
+            E.text name
+
+        signatureElement =
+            E.el
+                [ Font.size 13
+                , Font.family
+                    [ Font.typeface "Fira Code"
+                    , Font.typeface "Consolas"
+                    , Font.typeface "Courier"
+                    , Font.typeface "monospace"
+                    ]
+                ]
+                (E.text (sigToString sig))
+
+        categoryElement =
+            E.el
+                [ Font.size 15
+                , Font.bold
+                , Border.rounded 5
+                , E.padding 5
+                , Background.color colors.c3
+                , E.alignRight
+                ]
+                (E.text category)
+
+        rowAttributes =
+            [ E.spacing 10
+            , E.width E.fill
+            ]
+    in
     E.link
         [ E.pointer
         , Font.color colors.c4
@@ -484,45 +535,40 @@ viewFunction { name, sig, category } =
         ]
         { url = "https://ramdajs.com/docs/#" ++ name
         , label =
-            E.row [ E.spacing 10, E.width E.fill ]
-                [ E.text name
-                , E.el
-                    [ Font.size 13
-                    , Font.family
-                        [ Font.typeface "Fira Code"
-                        , Font.typeface "Consolas"
-                        , Font.typeface "Courier"
-                        , Font.typeface "monospace"
+            if isPhone then
+                E.column
+                    rowAttributes
+                    [ E.row [ E.width E.fill ]
+                        [ nameElement
+                        , categoryElement
                         ]
+                    , signatureElement
                     ]
-                    (E.text (sigToString sig))
-                , E.el
-                    [ Font.size 15
-                    , Font.bold
-                    , Border.rounded 5
-                    , E.padding 5
-                    , Background.color colors.c3
-                    , E.alignRight
-                    ]
-                    (E.text category)
-                ]
+
+            else
+                E.row
+                    rowAttributes
+                    [ nameElement, signatureElement, categoryElement ]
         }
 
 
-viewFunctions : List RamdaFunction -> E.Element Msg
-viewFunctions functions =
+viewFunctions : E.Device -> List RamdaFunction -> E.Element Msg
+viewFunctions device functions =
     E.column [ E.width E.fill ] <|
-        List.map viewFunction functions
+        List.map (viewFunction device) functions
 
 
 view : Model -> Html Msg
 view model =
+    let
+        device =
+            E.classifyDevice model.windowSize
+    in
     E.layout
         [ E.width E.fill
         , Background.color colors.c1
-        ]
-        (E.column [ E.width E.fill ]
-            [ Input.search
+        , E.inFront
+            (Input.search
                 [ Input.focusedOnLoad
                 ]
                 { label = Input.labelHidden "Search function"
@@ -530,23 +576,14 @@ view model =
                 , placeholder = Just (Input.placeholder [] (E.text "Filter"))
                 , text = model.search |> Maybe.withDefault ""
                 }
-            , Maybe.map
-                (\search ->
-                    case filterAndSortSearch search model.ramda of
-                        Err _ ->
-                            E.text "error parsing"
-
-                        Ok functions ->
-                            viewFunctions functions
-                )
-                model.search
-                |> Maybe.withDefault
-                    (viewFunctions model.ramda)
-            , E.row
+            )
+        , E.inFront
+            (E.row
                 [ E.alignBottom
                 , E.width E.fill
                 , E.padding 20
                 , E.spacing 10
+                , Background.color colors.c1
                 ]
                 [ E.text "A type driven search for ramda functions"
                 , E.newTabLink
@@ -560,6 +597,21 @@ view model =
                     , label = E.text "Source"
                     }
                 ]
+            )
+        ]
+        (E.column [ E.width E.fill ]
+            [ Maybe.map
+                (\search ->
+                    case filterAndSortSearch search model.ramda of
+                        Err _ ->
+                            E.text "error parsing"
+
+                        Ok functions ->
+                            viewFunctions device functions
+                )
+                model.search
+                |> Maybe.withDefault
+                    (viewFunctions device model.ramda)
             ]
         )
 
@@ -574,5 +626,9 @@ main =
         { view = view
         , init = init
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions =
+            always
+                (Browser.Events.onResize
+                    (\width height -> WindowResize { width = width, height = height })
+                )
         }
