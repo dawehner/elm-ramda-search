@@ -28,6 +28,117 @@ import Parser exposing (..)
 import Task
 
 
+sigMetric : Sig -> Sig -> Maybe Float
+sigMetric sigA sigB =
+    if sigA == sigB then
+        Just 0.0
+
+    else if List.Extra.isInfixOf (extractSigTypes sigA) (extractSigTypes sigB) then
+        Just 0.3
+
+    else if List.Extra.isInfixOf (extractSigTypes sigA) (extractSigTypes (convertToGenerics sigB)) then
+        Just 0.5
+
+    else
+        Nothing
+
+
+filterOrJustTuple : List ( Maybe a, b ) -> List ( a, b )
+filterOrJustTuple =
+    List.foldl
+        (\( x, b ) agg ->
+            case x of
+                Just x_ ->
+                    ( x_, b ) :: agg
+
+                _ ->
+                    agg
+        )
+        []
+
+
+{-| Filter and sort ramda functions based upon a search string of a user.
+
+Strategies:
+
+  - equal type: Matches by an identical type
+  - common prefix: Finds functions by common prefixes. So for exaxmple (a -> b) finds all
+    functions which involves match functions
+  - Replacement of generic types: It tries to replace type variables with the generic versions
+    to find "\*" functions
+  - TODO: Dynamic variable renaming, aka. hoogle level things
+  - name matching: Finds functions by its name
+  - description matching: Finds functions by their description texts
+
+-}
+filterAndSortSearch : String -> List RamdaFunction -> Result (List DeadEnd) (List RamdaFunction)
+filterAndSortSearch string list =
+    let
+        typeResult =
+            decodeSig string
+                |> Result.map
+                    (\sig ->
+                        List.map (\function -> ( sigMetric sig function.sig, function )) list
+                            |> filterOrJustTuple
+                    )
+
+        nameResult =
+            (List.filter (\function -> String.contains string function.name) list
+                |> List.map (\x -> ( 0.2, x ))
+            )
+                |> (\x ->
+                        if List.length x > 0 then
+                            Ok x
+
+                        else
+                            Err []
+                   )
+
+        descriptionResult =
+            (List.filter (\function -> String.contains string function.description) list
+                |> List.map (\x -> ( 0.1, x ))
+            )
+                |> (\x ->
+                        if List.length x > 0 then
+                            Ok x
+
+                        else
+                            Err []
+                   )
+    in
+    (case ( typeResult, nameResult, descriptionResult ) of
+        ( Ok a, Ok b, Ok c ) ->
+            Ok (a ++ b ++ c)
+
+        ( Ok a, Ok b, Err _ ) ->
+            Ok (a ++ b)
+
+        ( Ok a, Err _, Ok c ) ->
+            Ok (a ++ c)
+
+        ( Ok a, Err _, Err _ ) ->
+            Ok a
+
+        ( Err _, Ok b, Ok c ) ->
+            Ok (b ++ c)
+
+        ( Err _, Ok b, Err _ ) ->
+            Ok b
+
+        ( Err _, Err _, Ok c ) ->
+            Ok c
+
+        ( err, _, _ ) ->
+            err
+    )
+        |> Result.map
+            (\xs ->
+                List.sortBy Tuple.first xs
+                    |> List.map Tuple.second
+                    |> List.Extra.uniqueBy .name
+            )
+
+
 
 ---- MODEL ----
 
@@ -40,6 +151,13 @@ type alias Model =
         , height : Int
         }
     }
+
+
+{-| Define an actual function signature, with all possible cases.
+-}
+type Sig
+    = SigWithClass (List SigClass) (List SigType)
+    | SigList (List SigType)
 
 
 type SigType
@@ -61,11 +179,6 @@ type TypeVar
 
 type SigClass
     = SigClass String TypeVar
-
-
-type Sig
-    = SigWithClass (List SigClass) (List SigType)
-    | SigList (List SigType)
 
 
 extractSigTypes : Sig -> List SigType
@@ -230,6 +343,8 @@ parseClasses =
         ]
 
 
+{-| Main parser for the entire function signature.
+-}
 parseSig : Parser.Parser Sig
 parseSig =
     let
@@ -318,6 +433,8 @@ sigTypesToString =
     List.map sigTypeToString >> String.join " -> "
 
 
+{-| Converts a function signature to be used in the UI.
+-}
 sigToString : Sig -> String
 sigToString sig =
     case sig of
@@ -379,103 +496,6 @@ init value =
 
 
 ---- UPDATE ----
-
-
-sigMetric : Sig -> Sig -> Maybe Float
-sigMetric sigA sigB =
-    if sigA == sigB then
-        Just 0.0
-
-    else if List.Extra.isInfixOf (extractSigTypes sigA) (extractSigTypes sigB) then
-        Just 0.3
-
-    else if List.Extra.isInfixOf (extractSigTypes sigA) (extractSigTypes (convertToGenerics sigB)) then
-        Just 0.5
-
-    else
-        Nothing
-
-
-filterOrJustTuple : List ( Maybe a, b ) -> List ( a, b )
-filterOrJustTuple =
-    List.foldl
-        (\( x, b ) agg ->
-            case x of
-                Just x_ ->
-                    ( x_, b ) :: agg
-
-                _ ->
-                    agg
-        )
-        []
-
-
-filterAndSortSearch : String -> List RamdaFunction -> Result (List DeadEnd) (List RamdaFunction)
-filterAndSortSearch string list =
-    let
-        typeResult =
-            decodeSig string
-                |> Result.map
-                    (\sig ->
-                        List.map (\function -> ( sigMetric sig function.sig, function )) list
-                            |> filterOrJustTuple
-                    )
-
-        nameResult =
-            (List.filter (\function -> String.contains string function.name) list
-                |> List.map (\x -> ( 0.2, x ))
-            )
-                |> (\x ->
-                        if List.length x > 0 then
-                            Ok x
-
-                        else
-                            Err []
-                   )
-
-        descriptionResult =
-            (List.filter (\function -> String.contains string function.description) list
-                |> List.map (\x -> ( 0.1, x ))
-            )
-                |> (\x ->
-                        if List.length x > 0 then
-                            Ok x
-
-                        else
-                            Err []
-                   )
-    in
-    (case ( typeResult, nameResult, descriptionResult ) of
-        ( Ok a, Ok b, Ok c ) ->
-            Ok (a ++ b ++ c)
-
-        ( Ok a, Ok b, Err _ ) ->
-            Ok (a ++ b)
-
-        ( Ok a, Err _, Ok c ) ->
-            Ok (a ++ c)
-
-        ( Ok a, Err _, Err _ ) ->
-            Ok a
-
-        ( Err _, Ok b, Ok c ) ->
-            Ok (b ++ c)
-
-        ( Err _, Ok b, Err _ ) ->
-            Ok b
-
-        ( Err _, Err _, Ok c ) ->
-            Ok c
-
-        ( err, _, _ ) ->
-            err
-    )
-        |> Result.map
-            (\xs ->
-                List.sortBy Tuple.first xs
-                    |> List.map Tuple.second
-                    |> List.Extra.uniqueBy .name
-            )
 
 
 type Msg
@@ -635,7 +655,7 @@ view model =
                 , E.spaceEvenly
                 ]
                 (if device.class == E.Phone then
-                    [ E.column []
+                    [ E.column [ E.width E.fill ]
                         [ description
                         , E.row [ E.width E.fill, E.spaceEvenly ] [ linkTwitter, linkSource ]
                         ]
