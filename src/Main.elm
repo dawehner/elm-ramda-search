@@ -198,14 +198,17 @@ parseClass =
 
 parseClasses : Parser.Parser (List SigClass)
 parseClasses =
-    sequence
-        { start = ""
-        , separator = ","
-        , end = ""
-        , spaces = spaces
-        , item = parseClass
-        , trailing = Optional
-        }
+    oneOf
+        [ sequence
+            { start = "("
+            , separator = ","
+            , end = ")"
+            , spaces = spaces
+            , item = parseClass
+            , trailing = Optional
+            }
+        , map List.singleton parseClass
+        ]
 
 
 parseSig : Parser.Parser Sig
