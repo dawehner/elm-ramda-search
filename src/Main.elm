@@ -290,7 +290,7 @@ sigTypeToString sigType =
             "String"
 
         Container containerType innerTypes ->
-            "TODO"
+            containerType ++ " " ++ (String.join " " <| List.map sigTypeToString innerTypes)
 
         RegExp ->
             "RegExp"

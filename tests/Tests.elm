@@ -197,5 +197,11 @@ all =
             , test "adjust" <|
                 \_ ->
                     Expect.equal "Number -> (a -> a) -> [a] -> [a]" (sigToString (SigList [ Number, Function [ GenericVar (TypeVar "a"), GenericVar (TypeVar "a") ], ListT (GenericVar (TypeVar "a")), ListT (GenericVar (TypeVar "a")) ]))
+            , test "map" <|
+                \_ ->
+                    Expect.equal "Functor f => (a -> b) -> f a -> f b"
+                        (sigToString
+                            (SigWithClass [ SigClass "Functor" (TypeVar "f") ] [ Function [ GenericVar (TypeVar "a"), GenericVar (TypeVar "b") ], Container "f" [ GenericVar <| TypeVar "a" ], Container "f" [ GenericVar <| TypeVar "b" ] ])
+                        )
             ]
         ]
