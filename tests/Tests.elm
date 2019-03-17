@@ -158,10 +158,35 @@ all =
                             "(Functor a, Traversable    t, Applicative b) => a"
                         )
             ]
-        , test "lensIndex" <|
-            \_ ->
-                Expect.equal (Ok (SigList [ Number, Container "Lens" [ GenericVar (TypeVar "s"), GenericVar (TypeVar "a") ] ]))
-                    (Parser.run parseSig "Number -> Lens s a")
+        , describe "parseSig for containers"
+            [ test "container with one parameter" <|
+                \_ ->
+                    Expect.equal
+                        (Ok
+                            (SigWithClass
+                                [ SigClass "Functor" (TypeVar "f") ]
+                                [ Container "f" [ GenericVar (TypeVar "a") ]
+                                ]
+                            )
+                        )
+                        (Parser.run parseSig "Functor f => f a")
+
+            -- @todo
+            --            , test "nested containers" <|
+            --                \_ ->
+            --                    Expect.equal
+            --                        (Ok
+            --                            (SigWithClass
+            --                                [ SigClass "Applicative" (TypeVar "f"), SigClass "Traversable" (TypeVar "t") ]
+            --                                []
+            --                            )
+            --                        )
+            --                        (Parser.run parseSig "(Applicative f, Traversable t) => (a → f a) → (a → f b) → t a → f (t b)")
+            , test "container with multiple parameters" <|
+                \_ ->
+                    Expect.equal (Ok (SigList [ Number, Container "Lens" [ GenericVar (TypeVar "s"), GenericVar (TypeVar "a") ] ]))
+                        (Parser.run parseSig "Number -> Lens s a")
+            ]
         , describe "sigToString"
             [ test "F" <|
                 \_ ->

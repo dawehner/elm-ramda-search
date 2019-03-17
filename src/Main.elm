@@ -132,7 +132,6 @@ parseSigType =
             |. keyword "RegExp"
         , succeed Generic
             |. keyword "*"
-        , map GenericVar parseTypeVar
         , succeed ListT
             |. symbol "List"
             |. spaces
@@ -142,19 +141,6 @@ parseSigType =
             |. spaces
             |= lazy (\_ -> parseSigType)
             |. symbol "]"
-        , succeed Container
-            |= parseWord
-            |. spaces
-            |= map (List.map GenericVar)
-                (sequence
-                    { start = ""
-                    , end = ""
-                    , separator = ""
-                    , spaces = spaces
-                    , item = parseTypeVar
-                    , trailing = Parser.Optional
-                    }
-                )
         , succeed Function
             |. symbol "("
             |. spaces
@@ -168,6 +154,30 @@ parseSigType =
             |. spaces
             |= lazy (\_ -> parseSigType)
             |. symbol "}"
+        , succeed identity
+            |= andThen
+                (\xs ->
+                    case xs of
+                        x :: [] ->
+                            Parser.commit <| GenericVar <| TypeVar x
+
+                        x :: xs_ ->
+                            List.map (GenericVar << TypeVar) xs_
+                                |> Container x
+                                |> Parser.commit
+
+                        [] ->
+                            Parser.problem "missing variable"
+                )
+                (sequence
+                    { start = ""
+                    , end = ""
+                    , separator = ""
+                    , spaces = spaces
+                    , item = parseAnyWord
+                    , trailing = Parser.Optional
+                    }
+                )
         ]
 
 
@@ -177,6 +187,15 @@ parseWord =
         |. spaces
         |. chompIf Char.isUpper
         |. chompWhile (\c -> Char.isAlpha c)
+        |> getChompedString
+
+
+parseAnyWord : Parser String
+parseAnyWord =
+    succeed ()
+        |. spaces
+        |. chompIf Char.isAlphaNum
+        |. chompWhile (\c -> Char.isAlphaNum c)
         |> getChompedString
 
 
