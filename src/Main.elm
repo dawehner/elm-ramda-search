@@ -267,8 +267,16 @@ sigClassToString (SigClass name var) =
 
 sigClassesToString : List SigClass -> String
 sigClassesToString sigClasses =
-    List.map sigClassToString sigClasses
-        |> String.join ","
+    let
+        innerString =
+            List.map sigClassToString sigClasses
+                |> String.join ", "
+    in
+    if List.length sigClasses > 1 then
+        "(" ++ innerString ++ ")"
+
+    else
+        innerString
 
 
 sigTypeToString : SigType -> String

@@ -203,5 +203,19 @@ all =
                         (sigToString
                             (SigWithClass [ SigClass "Functor" (TypeVar "f") ] [ Function [ GenericVar (TypeVar "a"), GenericVar (TypeVar "b") ], Container "f" [ GenericVar <| TypeVar "a" ], Container "f" [ GenericVar <| TypeVar "b" ] ])
                         )
+            , test "mixed classes" <|
+                \_ ->
+                    Expect.equal
+                        "(Functor a, Traversable t, Applicative b) => a"
+                        (sigToString
+                            (SigWithClass
+                                [ SigClass "Functor" (TypeVar "a")
+                                , SigClass "Traversable" (TypeVar "t")
+                                , SigClass "Applicative" (TypeVar "b")
+                                ]
+                                [ GenericVar (TypeVar "a")
+                                ]
+                            )
+                        )
             ]
         ]
