@@ -603,30 +603,50 @@ view model =
                 ]
                 { label = Input.labelHidden "Search function"
                 , onChange = SearchTerm
-                , placeholder = Just (Input.placeholder [] (E.text "Filter"))
+                , placeholder = Just (Input.placeholder [] (E.text "Search by type, like a -> b -> a"))
                 , text = model.search |> Maybe.withDefault ""
                 }
             )
         , E.inFront
-            (E.row
+            (let
+                description =
+                    E.text "A type driven search for ramda functions"
+
+                linkTwitter =
+                    E.newTabLink
+                        [ Font.underline
+                        ]
+                        { url = "https://twitter.com/da_wehner"
+                        , label = E.text "@dawehner"
+                        }
+
+                linkSource =
+                    E.newTabLink [ Font.underline ]
+                        { url = "http://github.com/dawehner/elm-ramda-search"
+                        , label = E.text "Source"
+                        }
+             in
+             E.row
                 [ E.alignBottom
                 , E.width E.fill
                 , E.padding 20
                 , E.spacing 10
                 , Background.color colors.c1
+                , E.spaceEvenly
                 ]
-                [ E.text "A type driven search for ramda functions"
-                , E.newTabLink
-                    [ Font.underline
+                (if device.class == E.Phone then
+                    [ E.column []
+                        [ description
+                        , E.row [ E.width E.fill, E.spaceEvenly ] [ linkTwitter, linkSource ]
+                        ]
                     ]
-                    { url = "https://twitter.com/da_wehner"
-                    , label = E.text "@dawehner"
-                    }
-                , E.newTabLink [ Font.underline ]
-                    { url = "http://github.com/dawehner/elm-ramda-search"
-                    , label = E.text "Source"
-                    }
-                ]
+
+                 else
+                    [ description
+                    , linkTwitter
+                    , linkSource
+                    ]
+                )
             )
         ]
         (E.column [ E.width E.fill ]
